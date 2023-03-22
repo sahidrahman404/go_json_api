@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sahidrahman404/go_json_api/internal/page/data"
+	"github.com/sahidrahman404/go_json_api/internal/validator"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +22,21 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	movie := &data.Movie{
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: data.Runtime(input.Runtime),
+		Genres:  input.Genres,
+	}
+
+	v := validator.New()
+
+	if data.ValidateMovie(v, movie); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
 	fmt.Fprintf(w, "%+v\n", input)
 }
 
