@@ -1,6 +1,8 @@
 package validator
 
-import "regexp"
+import (
+	"regexp"
+)
 
 var (
 	EmailRX = regexp.MustCompile(
