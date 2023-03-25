@@ -30,5 +30,5 @@ func (app *application) routes() http.Handler {
 		app.createAuthenticationTokenHandler,
 	)
 
-	return app.recoverPanic(router)
+	return app.recoverPanic(app.authenticate(router))
 }
