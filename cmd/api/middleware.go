@@ -2,10 +2,13 @@ package main
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/felixge/httpsnoop"
 	"github.com/sahidrahman404/go_json_api/internal/data"
 	"github.com/sahidrahman404/go_json_api/internal/validator"
 )
@@ -114,4 +117,23 @@ func (app *application) requirePermission(code string, next http.HandlerFunc) ht
 	}
 
 	return app.requireActivatedUser(fn)
+}
+
+func (app *application) metrics(next http.Handler) http.Handler {
+	totalRequestReceived := expvar.NewInt("total_request_received")
+	totalResponseSent := expvar.NewInt("total_response_sent")
+	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time")
+	totalResponseSentByStatus := expvar.NewMap("total_response_sent_by_status")
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		totalRequestReceived.Add(1)
+
+		metrics := httpsnoop.CaptureMetrics(next, w, r)
+
+		totalResponseSent.Add(1)
+
+		totalProcessingTimeMicroseconds.Add(metrics.Duration.Microseconds())
+
+		totalResponseSentByStatus.Add(strconv.Itoa(metrics.Code), 1)
+	})
 }
